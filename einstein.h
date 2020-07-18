@@ -14,7 +14,7 @@ int NW = 1;
 
 void set_workers_number(size_t num_workers = 1){
     unsigned int w_pool_size = std::thread::hardware_concurrency();
-    if(w_pool_size == 0 or num_workers == 0){
+    if(w_pool_size <= 0 or num_workers <= 0){
         // std::thread::hardware_concurrency() may return 0 if the number of current threads supported is not well defined or not computable
         NW = 1;
         std::cout << "Number of threads currently supported not computable: reduced to 1" << std::endl;
@@ -214,15 +214,15 @@ public:
                 cpos = tpos;
 
                 // compute starting tensor position for each thread and job
+
                 for(int j = widths.size()-1; j >= 0; --j){
                     job_idxs.at(i).at(j) = tpos % widths.at(j);
                     tpos = tpos / widths.at(j);
                 }
                 tpos = cpos + jobs[i];
+//              std::cout << "Thread " << i << " starts at " << cpos << " for job " << std::endl;
             }
 
-            // Tperf a;
-            // a.tic();
             for(int i = 0; i < NW; ++i) {
                 threads.at(i) = std::thread([this, &x](int nj, std::vector<size_t> idxs) {
                     for (int k = 0; k < nj; ++k) {
@@ -238,13 +238,9 @@ public:
                     }
                 }, jobs[i], job_idxs[i]);
             }
-            // a.toc();
-
 
             for(auto & thread : threads){
-                // a.tic();
                 thread.join();
-                // a.toc();
             }
         }
         

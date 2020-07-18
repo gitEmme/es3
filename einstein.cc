@@ -14,7 +14,6 @@ std::ostream & operator << (std::ostream& out, Index_Set<id, ids...>) {
 
 
 int main() {
-    set_workers_number(1);
 
     //a bit of fun with the Index_Set library ;)
     typedef Index_Set<2,3,5,3> myset;
