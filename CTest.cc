@@ -14,18 +14,19 @@ std::ostream & operator << (std::ostream& out, Index_Set<id, ids...>) {
 void test_multiplication(int nw = 1){
     set_workers_number(nw);
     auto start = std::chrono::steady_clock::now();
-    tensor<int> t3(3,2,3), t4(2);
-
-    for(auto iter=t3.begin(); iter!=t3.end(); ++iter)
-        *iter = 1;
-    for(auto iter=t4.begin(); iter!=t4.end(); ++iter)
-        *iter = 1;
+    tensor<int> t23(2,3),t32(3,2);
+    int count = 0;
+    for(auto iter=t23.begin(); iter!=t23.end(); ++iter)
+        *iter = count++;
+    count=0;
+    for(auto iter=t32.begin(); iter!=t32.end(); ++iter)
+        *iter = count++;
 
     auto i=new_index;
     auto j=new_index;
     auto k=new_index;
 
-    tensor<int,rank<2>> t6=t3(i,j,k)*t4(j);
+    tensor<int,rank<2>> t6=t23(i,k)*t32(k,j);
     std::chrono::duration<double> time = std::chrono::steady_clock::now() - start;
     std::cout << "Elapsed time: " << std::chrono::duration<double, std::milli>(time).count() << " ms.\n";
     std::cout << std::endl;
@@ -55,18 +56,18 @@ void test_long_multiplication(int nw = 1){
 void test_sum(int nw = 1){
     set_workers_number(nw);
     auto start = std::chrono::steady_clock::now();
-    tensor<int> t1(2,2), t3(2,2,3,3), t4(2,3,3,2);
+    tensor<int> t23(2,3), t32(3,2), tsum(2,3);
 
-    for(auto iter=t3.begin(); iter!=t3.end(); ++iter)
-        *iter = 1;
-    for(auto iter=t4.begin(); iter!=t4.end(); ++iter)
-        *iter = 1;
+    int count = 0;
+    for(auto iter=t32.begin(); iter!=t32.end(); ++iter)
+        *iter = count++;
+    count = 0;
+    for(auto iter=tsum.begin(); iter!=tsum.end(); ++iter)
+        *iter = count++;
 
     auto i=new_index;
     auto j=new_index;
-    auto k=new_index;
-
-    t1(i,j) = t3(i,j,k,k)+t4(i,k,k,j);
+    tsum(i,j) = t23(i,j)+t32(j,i);
     std::chrono::duration<double> time = std::chrono::steady_clock::now() - start;
     std::cout << "Elapsed time: " << std::chrono::duration<double, std::milli>(time).count() << " ms.\n";
     std::cout << std::endl;
@@ -124,7 +125,9 @@ void test_mult_w(){
     sleep(1);
     test_multiplication(2);
     sleep(1);
-    test_multiplication(4);
+    test_multiplication(3);
+    sleep(1);
+    test_multiplication(6);
     sleep(1);
     test_multiplication(8);
     sleep(1);
@@ -180,6 +183,6 @@ void test_inv_w(){
 int main(){
     test_inv_w();
     test_sum_w();
-    test_mult_w();
+//    test_mult_w();
     return 0;
 }
