@@ -194,14 +194,14 @@ public:
             threads.reserve(NW);
             std::vector<std::vector<size_t>> job_idxs = std::vector<std::vector<size_t>>(NW);
 
-            size_t counter = 1;
+            size_t job_count = 1;
             for(auto w = widths.begin(); w != widths.end(); ++w){
-                counter *= (*w);
+                job_count *= (*w);
             }
 
-            std::vector<int> jobs =  std::vector<int>(NW, counter / NW); //jobs vector holds the queue of jobs for each worker thread
+            std::vector<int> jobs =  std::vector<int>(NW, job_count / NW); // jobs vector holds the queue of jobs for each worker thread
 
-            size_t extrajob = counter % NW; // if the modulo division is not 0 it means that some workers will have more jobs in their queue
+            size_t extrajob = job_count % NW; // if the modulo division is not 0 it means that some workers will have more jobs in their queue
 
             while(extrajob > 0){  // distribute the remaining jobs to workers: for example if 5 jobs are left add them to the queue of workers 4, 3, 2, 1, 0 respectively
                 ++jobs[extrajob - 1];
@@ -213,29 +213,31 @@ public:
                 job_idxs.at(i) = std::vector<size_t>(widths.size());
                 cpos = tpos;
 
-                // compute starting tensor position for each thread and job
+                // compute tensor position for each thread and job
 
                 for(int j = widths.size()-1; j >= 0; --j){
                     job_idxs.at(i).at(j) = tpos % widths.at(j);
                     tpos = tpos / widths.at(j);
                 }
                 tpos = cpos + jobs[i];
-//              std::cout << "Thread " << i << " starts at " << cpos << " for job " << std::endl;
+//              std::cout << "Thread " << i << " process tensor position form  " << cpos << " to " <<  tpos << std::endl;
             }
 
             for(int i = 0; i < NW; ++i) {
+                // iterate through tensor positions to accomplish current job
                 threads.at(i) = std::thread([this, &x](int nj, std::vector<size_t> idxs) {
                     for (int k = 0; k < nj; ++k) {
                         eval(idxs) += x.eval(idxs);
                         unsigned index = idxs.size() - 1;
                         ++idxs[index];
-                        // iterate through tensor positions to accomplish current job
+                        // check bounds
                         while (idxs[index] == widths[index] && index > 0) {
                             idxs[index] = 0;
                             --index;
                             ++idxs[index];
                         }
                     }
+
                 }, jobs[i], job_idxs[i]);
             }
 
